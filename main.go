@@ -17,6 +17,7 @@ import (
 	"launchpad.net/juju-core/instance"
 	"launchpad.net/juju-core/juju"
 	"launchpad.net/juju-core/state"
+	"launchpad.net/juju-core/utils/ssh"
 
 	// Import the providers.
 	_ "launchpad.net/juju-core/provider/all"
@@ -24,17 +25,47 @@ import (
 
 type NatCommand struct {
 	envcmd.EnvCommandBase
-	out     cmd.Output
-	service string
-	port    int
-	auto    bool
+	dryRun bool
 
 	machineMap map[string]*state.Machine
+	forwards   map[string][]*Forward
 }
 
-var doc = `TODO`
+var doc = `
+juju-nat sets up NAT routing to expose ports to service units deployed inside
+containers.
+
+Example:
+
+Given a service deployed to an LXC container:
+
+ $ juju deploy wordpress --to lxc:0
+ $ juju status wordpress
+
+machines:
+  "0":
+    dns-name: 192.168.122.107
+    containers:
+      0/lxc/2:
+        dns-name: 10.0.3.151
+        instance-id: juju-machine-0-lxc-2
+services:
+  owncloud:
+    charm: cs:precise/owncloud-12
+    exposed: true
+    units:
+      owncloud/0:
+        machine: 0/lxc/2
+        open-ports:
+        - 80/tcp
+        public-address: 10.0.3.151
+
+'juju nat' will expose port 80 on the containing machine (192.168.122.107), routed to
+port 80 on the container where the service is deployed (10.0.3.151).
+`
 
 type Forward struct {
+	GatewayMachine        *state.Machine
 	ExternalGatewayAddr   string
 	InternalGatewayAddr   string
 	InternalHostAddr      string
@@ -43,6 +74,9 @@ type Forward struct {
 }
 
 func (f *Forward) validate() error {
+	if f.GatewayMachine == nil {
+		return fmt.Errorf("external gateway machine not defined")
+	}
 	if f.ExternalGatewayAddr == "" {
 		return fmt.Errorf("external gateway address not found")
 	}
@@ -66,7 +100,7 @@ func WriteScriptStart(w io.Writer) error {
 	return err
 }
 
-func (f Forward) Write(w io.Writer) error {
+func (f *Forward) Write(w io.Writer) error {
 	for _, p := range f.InternalPorts {
 		_, err := fmt.Fprintf(w,
 			"/sbin/iptables -t nat -A PREROUTING -p tcp -i eth0 -d %s --dport %d -j DNAT --to %s:%d\n",
@@ -98,6 +132,7 @@ func (c *NatCommand) Info() *cmd.Info {
 
 func (c *NatCommand) SetFlags(f *gnuflag.FlagSet) {
 	c.EnvCommandBase.SetFlags(f)
+	f.BoolVar(&c.dryRun, "dry-run", false, "show the NAT routing commands, but do not execute them")
 }
 
 func (c *NatCommand) Init(args []string) error {
@@ -111,9 +146,8 @@ func (c *NatCommand) Run(ctx *cmd.Context) error {
 	}
 	defer conn.Close()
 
-	var natScript bytes.Buffer
-	WriteScriptStart(&natScript)
 	c.machineMap = make(map[string]*state.Machine)
+	c.forwards = make(map[string][]*Forward)
 	st := conn.State
 
 	machines, err := st.AllMachines()
@@ -136,11 +170,60 @@ func (c *NatCommand) Run(ctx *cmd.Context) error {
 				log.Println(err)
 				continue
 			}
-			fwd.Write(&natScript)
+			c.forwards[fwd.GatewayMachine.Id()] = append(c.forwards[fwd.GatewayMachine.Id()], fwd)
 		}
 	}
-	fmt.Println(natScript.String())
+	if c.dryRun {
+		c.printNatScripts()
+	} else {
+		c.execNatScripts()
+	}
 	return nil
+}
+
+func (c *NatCommand) printNatScripts() {
+	for machineId, fwds := range c.forwards {
+		fmt.Printf("%s:\n", machineId)
+		WriteScriptStart(os.Stdout)
+		for _, fwd := range fwds {
+			fwd.Write(os.Stdout)
+			fmt.Println()
+		}
+	}
+}
+
+func (c *NatCommand) execNatScripts() {
+	for machineId, fwds := range c.forwards {
+		machine, ok := c.machineMap[machineId]
+		if !ok {
+			log.Println("machine", machineId, "not found")
+			continue
+		}
+		var natScript bytes.Buffer
+		WriteScriptStart(&natScript)
+		for _, fwd := range fwds {
+			fwd.Write(&natScript)
+			fmt.Fprintln(&natScript)
+		}
+		err := c.execSsh(machine, natScript.String())
+		if err != nil {
+			log.Println("nat script failed on", machine.Id(), ":", err)
+		}
+	}
+}
+
+func (c *NatCommand) execSsh(m *state.Machine, script string) error {
+	host := instance.SelectPublicAddress(m.Addresses())
+	if host == "" {
+		return fmt.Errorf("could not resolve machine's public address")
+	}
+	log.Println("Configuring NAT routing on machine ", m.Id())
+	var options ssh.Options
+	cmd := ssh.Command("ubuntu@"+host, []string{"sh -c 'NATCMD=$(mktemp); cat >${NATCMD}; sudo sh -x ${NATCMD}'"}, &options)
+	cmd.Stdin = strings.NewReader(script)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (c *NatCommand) newForward(u *state.Unit) (*Forward, error) {
@@ -165,8 +248,11 @@ func (c *NatCommand) newForward(u *state.Unit) (*Forward, error) {
 		return nil, err
 	}
 
-	fwd := &Forward{InternalPorts: u.OpenedPorts(), ExternalGatewayDevice: "eth0"}
-	//gatewayAddrs := gateway.Addresses()
+	fwd := &Forward{
+		GatewayMachine:        gateway,
+		InternalPorts:         u.OpenedPorts(),
+		ExternalGatewayDevice: "eth0",
+	}
 
 	fwd.InternalHostAddr, fwd.InternalGatewayAddr, err = MatchNetworks(host, gateway)
 	if err != nil {
@@ -188,6 +274,9 @@ func MatchNetworks(host, gateway *state.Machine) (string, string, error) {
 			continue
 		} // for now...
 		for _, gwAddr := range gateway.Addresses() {
+			if gwAddr.Type != instance.Ipv4Address {
+				continue
+			}
 			prefix := greatestCommonPrefix(hostAddr.Value, gwAddr.Value)
 			if len(prefix) > len(bestPrefix) {
 				bestPrefix = prefix
@@ -196,7 +285,7 @@ func MatchNetworks(host, gateway *state.Machine) (string, string, error) {
 			}
 		}
 	}
-	if bestPrefix != "" && strings.Contains(bestPrefix, ".") {
+	if bestHost != "" && bestGw != "" {
 		return bestHost, bestGw, nil
 	} else {
 		return "", "", fmt.Errorf("failed to find common network for %s and %s", host.Id(), gateway.Id())
