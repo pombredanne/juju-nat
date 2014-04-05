@@ -11,14 +11,33 @@ Install Go 1.2, http://golang.org.
 Get a recent pull of juju-core & godeps, update all its package dependencies.
 
 ```
- $ go get -u launchpad.net/juju-core/...
- $ go get launchpad.net/godeps
- $ godeps -u $GOPATH/src/launchpad.net/juju-core/dependencies.tsv
+$ go get -u launchpad.net/juju-core/...
+$ go get launchpad.net/godeps
+$ godeps -u $GOPATH/src/launchpad.net/juju-core/dependencies.tsv
 ```
 
 Checkout, build and install.
 ```
- $ go get github.com/cmars/juju-nat
+$ go get github.com/cmars/juju-nat
+```
+
+
+Usage
+=====
+
+```
+$ juju-nat --help
+usage: nat [options] [args and stuff]
+purpose: Expose a service in a container to external ports on the host machine.
+
+options:
+--dry-run  (= false)
+    show the NAT routing commands, but do not execute them
+-e, --environment (= "fatty")
+    juju environment to operate in
+
+juju-nat sets up NAT routing to expose ports to service units deployed inside
+containers.
 ```
 
 Example
@@ -27,8 +46,8 @@ Example
 Given a service deployed into an LXC container:
 
 ```
- $ juju deploy owncloud --to lxc:0
- $ juju status owncloud
+$ juju deploy owncloud --to lxc:0
+$ juju status owncloud
 ```
 
 ```
