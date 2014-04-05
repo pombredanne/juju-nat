@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"launchpad.net/gnuflag"
@@ -16,6 +17,7 @@ import (
 	"launchpad.net/juju-core/cmd/envcmd"
 	"launchpad.net/juju-core/instance"
 	"launchpad.net/juju-core/juju"
+	"launchpad.net/juju-core/names"
 	"launchpad.net/juju-core/state"
 	"launchpad.net/juju-core/utils/ssh"
 
@@ -25,8 +27,12 @@ import (
 
 type NatCommand struct {
 	envcmd.EnvCommandBase
-	dryRun bool
+	dryRun      bool
+	clear       bool
+	target      string
+	portMapping string
 
+	portMap    map[int]int
 	machineMap map[string]*state.Machine
 	forwards   map[string][]*Forward
 }
@@ -36,13 +42,46 @@ juju-nat sets up NAT routing to expose ports to service units deployed inside
 containers.
 `
 
+type PortMap struct {
+	InternalPort int
+	ExternalPort int
+}
+
+func (p *PortMap) String() string {
+	return fmt.Sprintf("%d:%d", p.InternalPort, p.ExternalPort)
+}
+
+func ParsePortMap(s string) (*PortMap, error) {
+	parts := strings.SplitN(s, ":", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid port mapping: %q", s)
+	}
+	intPort, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return nil, err
+	}
+	extPort, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, err
+	}
+	return &PortMap{InternalPort: intPort, ExternalPort: extPort}, nil
+}
+
+type UnitContainment struct {
+	Unit           *state.Unit
+	GatewayMachine *state.Machine
+	HostMachine    *state.Machine
+}
+
 type Forward struct {
-	GatewayMachine        *state.Machine
+	UnitContainment
 	ExternalGatewayAddr   string
 	InternalGatewayAddr   string
 	InternalHostAddr      string
 	InternalPorts         []instance.Port
 	ExternalGatewayDevice string
+
+	portMap map[int]int
 }
 
 func (f *Forward) validate() error {
@@ -65,24 +104,31 @@ func (f *Forward) validate() error {
 }
 
 func WriteScriptStart(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `#!/bin/sh
-/sbin/iptables -F
-/sbin/iptables -F -t nat
-`)
+	_, err := fmt.Fprintf(w, "#!/bin/sh\n")
+	return err
+}
+
+func WriteScriptClear(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "/sbin/iptables -F\n/sbin/iptables -F -t nat\n")
 	return err
 }
 
 func (f *Forward) Write(w io.Writer) error {
 	for _, p := range f.InternalPorts {
+		extPort, ok := f.portMap[p.Number]
+		if !ok {
+			extPort = p.Number
+		}
+
 		_, err := fmt.Fprintf(w,
 			"/sbin/iptables -t nat -A PREROUTING -p tcp -i eth0 -d %s --dport %d -j DNAT --to %s:%d\n",
-			f.ExternalGatewayAddr, p.Number, f.InternalHostAddr, p.Number)
+			f.ExternalGatewayAddr, extPort, f.InternalHostAddr, p.Number)
 		if err != nil {
 			return err
 		}
 		_, err = fmt.Fprintf(w,
 			"/sbin/iptables -A FORWARD -p tcp -i eth0 -d %s --dport %d -j ACCEPT\n",
-			f.ExternalGatewayAddr, p.Number)
+			f.ExternalGatewayAddr, extPort)
 		if err != nil {
 			return err
 		}
@@ -96,7 +142,7 @@ func (f *Forward) Write(w io.Writer) error {
 func (c *NatCommand) Info() *cmd.Info {
 	return &cmd.Info{
 		Name:    "nat",
-		Args:    "[args and stuff]",
+		Args:    "[args] <target>",
 		Purpose: "Expose a service in a container to external ports on the host machine.",
 		Doc:     doc,
 	}
@@ -105,10 +151,32 @@ func (c *NatCommand) Info() *cmd.Info {
 func (c *NatCommand) SetFlags(f *gnuflag.FlagSet) {
 	c.EnvCommandBase.SetFlags(f)
 	f.BoolVar(&c.dryRun, "dry-run", false, "show the NAT routing commands, but do not execute them")
+	f.BoolVar(&c.clear, "clear", false, "clear all routing before setting up NAT")
+	f.StringVar(&c.portMapping, "p", "", "port mapping(s), INTERNAL:EXTERAL[,INTERNAL:EXTERNAL,...]")
 }
 
 func (c *NatCommand) Init(args []string) error {
-	return c.EnvCommandBase.Init()
+	err := c.EnvCommandBase.Init()
+	if err != nil {
+		return err
+	}
+	c.portMap = make(map[int]int)
+	if len(args) == 0 {
+		return fmt.Errorf("no target name specified")
+	}
+	c.target = args[0]
+
+	if c.portMapping != "" {
+		portMappings := strings.Split(c.portMapping, ",")
+		for _, portMapping := range portMappings {
+			portMap, err := ParsePortMap(portMapping)
+			if err != nil {
+				return fmt.Errorf("invalid port mapping %q: %v", portMapping, err)
+			}
+			c.portMap[portMap.InternalPort] = portMap.ExternalPort
+		}
+	}
+	return nil
 }
 
 func (c *NatCommand) Run(ctx *cmd.Context) error {
@@ -117,6 +185,10 @@ func (c *NatCommand) Run(ctx *cmd.Context) error {
 		return fmt.Errorf("Unable to connect to environment %q: %v", c.EnvName, err)
 	}
 	defer conn.Close()
+
+	if !names.IsMachine(c.target) && !names.IsUnit(c.target) {
+		return fmt.Errorf("invalid target: %q", c.target)
+	}
 
 	c.machineMap = make(map[string]*state.Machine)
 	c.forwards = make(map[string][]*Forward)
@@ -137,12 +209,24 @@ func (c *NatCommand) Run(ctx *cmd.Context) error {
 			return err
 		}
 		for _, u := range units {
-			fwd, err := c.newForward(u)
-			if err != nil {
+			uc, err := c.unitContainment(u)
+			if err == ErrNoContainer {
+				continue
+			} else if err != nil {
 				log.Println(err)
 				continue
 			}
-			c.forwards[fwd.GatewayMachine.Id()] = append(c.forwards[fwd.GatewayMachine.Id()], fwd)
+
+			if (names.IsUnit(c.target) && u.Name() == c.target) ||
+				(names.IsMachine(c.target) && (uc.HostMachine.Id() == c.target || uc.GatewayMachine.Id() == c.target)) {
+				fwd, err := uc.newForward()
+				fwd.portMap = c.portMap
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				c.forwards[uc.GatewayMachine.Id()] = append(c.forwards[uc.GatewayMachine.Id()], fwd)
+			}
 		}
 	}
 	if c.dryRun {
@@ -157,6 +241,9 @@ func (c *NatCommand) printNatScripts() {
 	for machineId, fwds := range c.forwards {
 		fmt.Printf("%s:\n", machineId)
 		WriteScriptStart(os.Stdout)
+		if c.clear {
+			WriteScriptClear(os.Stdout)
+		}
 		for _, fwd := range fwds {
 			fwd.Write(os.Stdout)
 			fmt.Println()
@@ -173,6 +260,9 @@ func (c *NatCommand) execNatScripts() {
 		}
 		var natScript bytes.Buffer
 		WriteScriptStart(&natScript)
+		if c.clear {
+			WriteScriptClear(&natScript)
+		}
 		for _, fwd := range fwds {
 			fwd.Write(&natScript)
 			fmt.Fprintln(&natScript)
@@ -198,7 +288,9 @@ func (c *NatCommand) execSsh(m *state.Machine, script string) error {
 	return cmd.Run()
 }
 
-func (c *NatCommand) newForward(u *state.Unit) (*Forward, error) {
+var ErrNoContainer = fmt.Errorf("service unit not deployed in a container")
+
+func (c *NatCommand) unitContainment(u *state.Unit) (*UnitContainment, error) {
 	machineId, err := u.AssignedMachineId()
 	if err != nil {
 		return nil, err
@@ -206,35 +298,36 @@ func (c *NatCommand) newForward(u *state.Unit) (*Forward, error) {
 
 	host, ok := c.machineMap[machineId]
 	if !ok {
-		log.Println("machine", machineId, "not found")
-		return nil, err
+		return nil, fmt.Errorf("machine not found: %q", machineId)
 	}
 	gatewayId := state.ParentId(machineId)
 	if gatewayId == "" {
 		// Ignore machines not in containers
-		return nil, err
+		return nil, ErrNoContainer
 	}
 	gateway, ok := c.machineMap[gatewayId]
 	if !ok {
-		log.Println("parent machine", gatewayId, "not found")
-		return nil, err
+		return nil, fmt.Errorf("parent machine %q not found", gatewayId)
 	}
+	return &UnitContainment{Unit: u, GatewayMachine: gateway, HostMachine: host}, nil
+}
 
+func (u *UnitContainment) newForward() (*Forward, error) {
 	fwd := &Forward{
-		GatewayMachine:        gateway,
-		InternalPorts:         u.OpenedPorts(),
+		UnitContainment:       *u,
+		InternalPorts:         u.Unit.OpenedPorts(),
 		ExternalGatewayDevice: "eth0",
+		portMap:               make(map[int]int),
 	}
 
-	fwd.InternalHostAddr, fwd.InternalGatewayAddr, err = MatchNetworks(host, gateway)
+	var err error
+	fwd.InternalHostAddr, fwd.InternalGatewayAddr, err = MatchNetworks(u.HostMachine, u.GatewayMachine)
 	if err != nil {
-		log.Println("failed to find network for NAT routing", machineId)
 		return nil, err
 	}
 
-	if fwd.ExternalGatewayAddr = instance.SelectPublicAddress(gateway.Addresses()); fwd.ExternalGatewayAddr == "" {
-		log.Println("failed to get internal address for", machineId, ": skipping")
-		return nil, err
+	if fwd.ExternalGatewayAddr = instance.SelectPublicAddress(u.GatewayMachine.Addresses()); fwd.ExternalGatewayAddr == "" {
+		return nil, fmt.Errorf("failed to get internal address: %q", u.GatewayMachine.Id())
 	}
 	return fwd, fwd.validate()
 }
