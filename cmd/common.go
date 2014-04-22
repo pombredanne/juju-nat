@@ -234,14 +234,18 @@ func (u *UnitContainment) NewForward() (*Forward, error) {
 	return fwd, fwd.validate()
 }
 
+func isLoopback(addr string) bool {
+	return strings.HasPrefix(addr, "127.")
+}
+
 func MatchNetworks(host, gateway *state.Machine) (string, string, error) {
 	var bestPrefix, bestHost, bestGw string
 	for _, hostAddr := range host.Addresses() {
-		if hostAddr.Type != instance.Ipv4Address {
+		if hostAddr.Type != instance.Ipv4Address || isLoopback(hostAddr.Value) {
 			continue
-		} // for now...
+		}
 		for _, gwAddr := range gateway.Addresses() {
-			if gwAddr.Type != instance.Ipv4Address {
+			if gwAddr.Type != instance.Ipv4Address || isLoopback(hostAddr.Value) {
 				continue
 			}
 			prefix := greatestCommonPrefix(hostAddr.Value, gwAddr.Value)
