@@ -9,7 +9,7 @@ import (
 
 	"log"
 
-	"launchpad.net/juju-core/cmd/envcmd"
+	"launchpad.net/juju-core/cmd"
 	"launchpad.net/juju-core/instance"
 	"launchpad.net/juju-core/juju"
 	"launchpad.net/juju-core/names"
@@ -128,7 +128,7 @@ func (f *Forward) Write(w io.Writer) error {
 }
 
 type NatCommand struct {
-	envcmd.EnvCommandBase
+	cmd.EnvCommandBase
 
 	Conn           *juju.Conn
 	MachineMap     map[string]*state.Machine

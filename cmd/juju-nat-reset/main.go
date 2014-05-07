@@ -46,7 +46,7 @@ func (c *NatResetCommand) SetFlags(f *gnuflag.FlagSet) {
 }
 
 func (c *NatResetCommand) Init(args []string) error {
-	err := c.NatCommand.Init()
+	err := c.NatCommand.Init(args)
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func (c *NatOutboundCommand) SetFlags(f *gnuflag.FlagSet) {
 }
 
 func (c *NatOutboundCommand) Init(args []string) error {
-	err := c.NatCommand.Init()
+	err := c.NatCommand.Init(args)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,228 @@
+{
+	"ImportPath": "github.com/cmars/juju-nat",
+	"GoVersion": "go1.2",
+	"Packages": [
+		"github.com/cmars/juju-nat/..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go.crypto/cast5",
+			"Comment": "null-185",
+			"Rev": "6478cc9340cbbe6c04511280c5007722269108e9"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/openpgp",
+			"Comment": "null-185",
+			"Rev": "6478cc9340cbbe6c04511280c5007722269108e9"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/ssh",
+			"Comment": "null-185",
+			"Rev": "6478cc9340cbbe6c04511280c5007722269108e9"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.net/websocket",
+			"Comment": "null-117",
+			"Rev": "c17ad62118ea511e1051721b429779fa40bddc74"
+		},
+		{
+			"ImportPath": "github.com/errgo/errgo",
+			"Rev": "93d72bf813883d1054cae1c001d3a46603f7f559"
+		},
+		{
+			"ImportPath": "github.com/joyent/gocommon",
+			"Rev": "98b151a080efe19bcde223d2d3b04389963d2347"
+		},
+		{
+			"ImportPath": "github.com/joyent/gomanta/manta",
+			"Rev": "ff785814c0ebb4050420a2f1d47895b35b8808f2"
+		},
+		{
+			"ImportPath": "github.com/joyent/gosdc/cloudapi",
+			"Rev": "10bbe92c5d98c8b38a0b7f62ee042c7252150efc"
+		},
+		{
+			"ImportPath": "github.com/joyent/gosign/auth",
+			"Rev": "476720af5427223da5420afbbadf620bfb760345"
+		},
+		{
+			"ImportPath": "github.com/juju/loggo",
+			"Rev": "fa3acf9ab9ed09aea29030558528e24a254d27af"
+		},
+		{
+			"ImportPath": "labix.org/v2/mgo",
+			"Comment": "274",
+			"Rev": "gustavo@niemeyer.net-20131118213720-aralgr4ienh0gdyq"
+		},
+		{
+			"ImportPath": "launchpad.net/gnuflag",
+			"Comment": "12",
+			"Rev": "roger.peppe@canonical.com-20121003093437-zcyyw0lpvj2nifpk"
+		},
+		{
+			"ImportPath": "launchpad.net/goamz/aws",
+			"Comment": "50",
+			"Rev": "roger.peppe@canonical.com-20131218155244-hbnkvlkkzy3vmlh9"
+		},
+		{
+			"ImportPath": "launchpad.net/goamz/ec2",
+			"Comment": "50",
+			"Rev": "roger.peppe@canonical.com-20131218155244-hbnkvlkkzy3vmlh9"
+		},
+		{
+			"ImportPath": "launchpad.net/goamz/s3",
+			"Comment": "50",
+			"Rev": "roger.peppe@canonical.com-20131218155244-hbnkvlkkzy3vmlh9"
+		},
+		{
+			"ImportPath": "launchpad.net/golxc",
+			"Comment": "8",
+			"Rev": "tim.penhey@canonical.com-20140311005930-b14361bwnocu3krh"
+		},
+		{
+			"ImportPath": "launchpad.net/gomaasapi",
+			"Comment": "49",
+			"Rev": "ian.booth@canonical.com-20131017011445-m1hmr0ap14osd7li"
+		},
+		{
+			"ImportPath": "launchpad.net/goose",
+			"Comment": "119",
+			"Rev": "tarmac-20140124165235-h9rloooc531udms5"
+		},
+		{
+			"ImportPath": "launchpad.net/goyaml",
+			"Comment": "51",
+			"Rev": "gustavo@niemeyer.net-20131114120802-abe042syx64z2m7s"
+		},
+		{
+			"ImportPath": "launchpad.net/gwacl",
+			"Comment": "234",
+			"Rev": "tarmac-20140205045433-81h182mhz24fzp5e"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/agent",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/cert",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/charm",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/cloudinit",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/cmd",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/constraints",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/container",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/environs",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/errors",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/instance",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/juju",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/log",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/names",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/provider",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/replicaset",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/rpc",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/schema",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/state",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/thirdparty/pbkdf2",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/tools",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/upstart",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/utils",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/version",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/juju-core/worker",
+			"Comment": "2283",
+			"Rev": "tarmac-20140430223231-28ad6h2d37w00819"
+		},
+		{
+			"ImportPath": "launchpad.net/tomb",
+			"Comment": "17",
+			"Rev": "gustavo@niemeyer.net-20130531003818-70ikdgklbxopn8x4"
+		}
+	]
+}

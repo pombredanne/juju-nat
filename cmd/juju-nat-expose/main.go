@@ -52,7 +52,7 @@ func (c *NatExposeCommand) SetFlags(f *gnuflag.FlagSet) {
 }
 
 func (c *NatExposeCommand) Init(args []string) error {
-	err := c.NatCommand.Init()
+	err := c.NatCommand.Init(args)
 	if err != nil {
 		return err
 	}
