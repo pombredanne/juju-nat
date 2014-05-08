@@ -1,0 +1,3 @@
+.*.swp
+Godeps/_workspace
+cmd/juju-nat-*/juju-nat-*
