@@ -2,7 +2,10 @@
 	"ImportPath": "github.com/cmars/juju-nat",
 	"GoVersion": "go1.2",
 	"Packages": [
-		"github.com/cmars/juju-nat/..."
+		"github.com/cmars/juju-nat/cmd",
+		"github.com/cmars/juju-nat/cmd/juju-nat-expose",
+		"github.com/cmars/juju-nat/cmd/juju-nat-outbound",
+		"github.com/cmars/juju-nat/cmd/juju-nat-reset"
 	],
 	"Deps": [
 		{
