@@ -1,0 +1,16 @@
+Source: juju-nat
+Section: universe/devel
+Priority: extra
+Maintainer: Casey Marshall <cmars@cmarstech.com>
+Build-Depends: debhelper (>= 8.0.0), golang-go (>= 1.1.1)
+Standards-Version: 3.9.4
+Homepage: https://github.com/cmars/juju-nat
+
+Package: juju-nat
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: NAT routing for Juju services in containers.
+ Deploying services into LXC and KVM containers provides nice isolation and
+ encapsulation. juju nat-\* subcommands set up NAT routing to service units
+ deployed inside containers.
+
