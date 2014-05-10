@@ -4,25 +4,31 @@ Deploying services into LXC and KVM containers provides nice isolation and
 encapsulation. juju nat-\* subcommands set up NAT routing to service units
 deployed inside containers.
 
-BUILD
-=====
-Install Go 1.2, http://golang.org.
+INSTALL
+=======
 
-Get a recent pull of juju-core & godeps, update all its package dependencies.
+Ubuntu Packages
+---------------
 
-```
-$ go get -u launchpad.net/juju-core/...
-$ go get launchpad.net/godeps
-$ godeps -u $GOPATH/src/launchpad.net/juju-core/dependencies.tsv
-```
-
-Checkout, build and install.
+Published packages are available for recent supported Ubuntu releases.
 
 ```
-$ go install github.com/cmars/juju-nat/...
+$ apt-add-repository ppa:cmars/juju-nat
+$ apt-get update
+$ apt-get install juju-nat
 ```
 
-This will install binaries in $GOPATH/bin, adding the following juju subcommands.
+Build from source
+-----------------
+
+Requires Go 1.2 or newer, http://golang.org, as well as git, hg and bzr.
+
+```
+$ git clone https://github.com/cmars/juju-nat.git
+$ cd juju-nat
+$ make all
+$ make install
+```
 
 USAGE
 =====

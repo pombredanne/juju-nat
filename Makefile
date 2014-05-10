@@ -5,7 +5,11 @@ BINS=$(CMDS:%=$(SANDBOX)/bin/%)
 GODEP=$(SANDBOX)/bin/godep
 MAINT_SIGKEY=0x879CF8AA8DDA301A
 
-all: $(BINS)
+all: godepcheck $(BINS)
+
+godepcheck: $(GODEP) $(SANDBOX)/src/launchpad.net/juju-core/README
+
+$(SANDBOX)/src/launchpad.net/juju-core/README: restore
 
 restore:
 	GOPATH=$(SANDBOX) $(GODEP) restore
@@ -33,4 +37,4 @@ src-clean:
 pkg-clean:
 	$(RM) ../juju-nat_*.deb ../juju-nat_*.dsc ../juju-nat_*.changes ../juju-nat_*.build ../juju-nat_*.tar.gz 
 
-.PHONY: _godep all debbin debsrc clean src-clean
+.PHONY: _godep all godepcheck restore debbin debsrc clean src-clean pkg-clean
