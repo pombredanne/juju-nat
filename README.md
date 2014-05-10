@@ -26,7 +26,7 @@ Requires Go 1.2 or newer, http://golang.org, as well as git, hg and bzr.
 ```
 $ git clone https://github.com/cmars/juju-nat.git
 $ cd juju-nat
-$ make all
+$ make restore all
 $ make PREFIX=$HOME install  # binaries installed into $HOME/bin
 ```
 
