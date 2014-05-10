@@ -1,0 +1,10 @@
+# This is an override for the following lintian errors:
+# E: juju-nat: unstripped-binary-or-object usr/bin/juju-nat-expose
+# W: juju-nat: hardening-no-relro usr/bin/juju-nat-expose
+# E: juju-nat: unstripped-binary-or-object usr/bin/juju-nat-outbound
+# W: juju-nat: hardening-no-relro usr/bin/juju-nat-outbound
+# E: juju-nat: unstripped-binary-or-object usr/bin/juju-nat-reset
+# W: juju-nat: hardening-no-relro usr/bin/juju-nat-reset
+# Golang binaries cannot be stripped. Deal with it.
+juju-nat: unstripped-binary-or-object
+juju-nat: hardening-no-relro

@@ -1,0 +1,5 @@
+# This is an override for the following lintian errors:
+# E: juju-nat source: source-is-missing Godeps/_workspace/src/code.google.com/p/go.tools/godoc/static/jquery.js
+# E: juju-nat source: source-is-missing Godeps/_workspace/src/code.google.com/p/go.tools/cmd/present/js/jquery-ui.js
+# These are lintian false-positives.
+juju-nat source: source-is-missing
