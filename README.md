@@ -27,7 +27,7 @@ Requires Go 1.2 or newer, http://golang.org, as well as git, hg and bzr.
 $ git clone https://github.com/cmars/juju-nat.git
 $ cd juju-nat
 $ make all
-$ make install
+$ make PREFIX=$HOME install  # binaries installed into $HOME/bin
 ```
 
 USAGE
@@ -88,7 +88,3 @@ BUGS
 Probably some. Networking is not my speciality, there are probably other ways
 to pull this off, some may be better, let me know.  In the meantime, juju-nat
 lets me use LXC containers with Juju in a very practical down-to-earth way.
-
-Kind of silly to have to have one instance for every Juju service.  Natting
-containers with the Juju manual provider is probably enough to run a whole lot
-of services for personal use.  That's why I wrote this...
