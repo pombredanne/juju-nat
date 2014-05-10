@@ -9,7 +9,7 @@ PREFIX=/usr/local
 
 all: godepcheck $(BINS)
 
-install: $(BINS)
+install: all
 	mkdir -p $(PREFIX)/bin
 	install -m 0755 $(BINS) $(PREFIX)/bin
 
@@ -19,6 +19,7 @@ $(SANDBOX)/src/launchpad.net/juju-core/README: restore
 
 restore:
 	GOPATH=$(SANDBOX) $(GODEP) restore
+	mkdir -p $(SANDBOX)/src/github.com/cmars/juju-nat
 	git archive HEAD | (cd $(SANDBOX)/src/github.com/cmars/juju-nat; tar xvf -)
 
 $(SANDBOX)/bin/juju-nat-%: $(GODEP)
@@ -28,8 +29,6 @@ $(GODEP):
 	GOPATH=$(SANDBOX) go get github.com/tools/godep
 
 debbin: all
-	mkdir -p $(SANDBOX)/src/github.com/cmars/juju-nat
-	git archive HEAD | (cd $(SANDBOX)/src/github.com/cmars/juju-nat; tar xvf -)
 	debuild -us -uc -i -b
 
 debsrc: debbin
