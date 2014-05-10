@@ -13,3 +13,5 @@ export DH_OPTIONS
 
 override_dh_strip:
 
+override_dh_auto_install:
+
