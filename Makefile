@@ -30,4 +30,7 @@ clean:
 src-clean:
 	$(RM) -r $(SANDBOX)
 
+pkg-clean:
+	$(RM) ../juju-nat_*.deb ../juju-nat_*.dsc ../juju-nat_*.changes ../juju-nat_*.build ../juju-nat_*.tar.gz 
+
 .PHONY: _godep all debbin debsrc clean src-clean

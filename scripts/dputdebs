@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for i in $(ls ../juju-nat_*source.changes); do
+	dput ppa:cmars/juju-nat $i
+done
+
