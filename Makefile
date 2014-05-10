@@ -5,7 +5,13 @@ BINS=$(CMDS:%=$(SANDBOX)/bin/%)
 GODEP=$(SANDBOX)/bin/godep
 MAINT_SIGKEY=0x879CF8AA8DDA301A
 
+PREFIX=/usr/local
+
 all: godepcheck $(BINS)
+
+install: $(BINS)
+	mkdir -p $(PREFIX)/bin
+	install -m 0755 $(BINS) $(PREFIX)/bin
 
 godepcheck: $(GODEP) $(SANDBOX)/src/launchpad.net/juju-core/README
 
@@ -13,6 +19,7 @@ $(SANDBOX)/src/launchpad.net/juju-core/README: restore
 
 restore:
 	GOPATH=$(SANDBOX) $(GODEP) restore
+	git archive HEAD | (cd $(SANDBOX)/src/github.com/cmars/juju-nat; tar xvf -)
 
 $(SANDBOX)/bin/juju-nat-%: $(GODEP)
 	$(GODEP) go build -o $@ github.com/cmars/juju-nat/cmd/$(shell basename $@)
