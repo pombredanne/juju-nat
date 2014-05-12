@@ -52,10 +52,6 @@ func (c *NatExposeCommand) SetFlags(f *gnuflag.FlagSet) {
 }
 
 func (c *NatExposeCommand) Init(args []string) error {
-	err := c.NatCommand.Init(args)
-	if err != nil {
-		return err
-	}
 	c.portMap = make(map[int]int)
 	if len(args) == 0 {
 		return fmt.Errorf("no target name specified")
