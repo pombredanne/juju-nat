@@ -49,6 +49,7 @@ func (c *NatExposeCommand) SetFlags(f *gnuflag.FlagSet) {
 	c.NatCommand.SetFlags(f)
 	f.BoolVar(&c.dryRun, "dry-run", false, "show the NAT routing commands, but do not execute them")
 	f.StringVar(&c.portMapping, "p", "", "port mapping(s), INTERNAL:EXTERAL[,INTERNAL:EXTERNAL,...]")
+	f.StringVar(&c.ExternalGatewayDevice, "i", "eth0", "interface to route, default: eth0")
 }
 
 func (c *NatExposeCommand) Init(args []string) error {
@@ -57,6 +58,8 @@ func (c *NatExposeCommand) Init(args []string) error {
 		return fmt.Errorf("no target name specified")
 	}
 	c.target = args[0]
+
+	c.ExternalGatewayDevice = args[2]
 
 	if c.portMapping != "" {
 		portMappings := strings.Split(c.portMapping, ",")

@@ -96,8 +96,8 @@ func WriteScriptOutbound(w io.Writer, uc UnitContainment) error {
 		return err
 	}
 	_, err = fmt.Fprintf(w,
-		"/sbin/iptables -t nat -A POSTROUTING -s %s -o eth0 -j SNAT --to %s\n",
-		f.InternalHostAddr, f.ExternalGatewayAddr)
+		"/sbin/iptables -t nat -A POSTROUTING -s %s -o %s -j SNAT --to %s\n",
+		f.InternalHostAddr, f.ExternalGatewayDevice, f.ExternalGatewayAddr)
 	return err
 }
 
@@ -109,21 +109,21 @@ func (f *Forward) Write(w io.Writer) error {
 		}
 
 		_, err := fmt.Fprintf(w,
-			"/sbin/iptables -t nat -A PREROUTING -p tcp -i eth0 -d %s --dport %d -j DNAT --to %s:%d\n",
-			f.ExternalGatewayAddr, extPort, f.InternalHostAddr, p.Number)
+			"/sbin/iptables -t nat -A PREROUTING -p tcp -i %s -d %s --dport %d -j DNAT --to %s:%d\n",
+			 f.ExternalGatewayDevice, f.ExternalGatewayAddr, extPort, f.InternalHostAddr, p.Number)
 		if err != nil {
 			return err
 		}
 		_, err = fmt.Fprintf(w,
-			"/sbin/iptables -A FORWARD -p tcp -i eth0 -d %s --dport %d -j ACCEPT\n",
-			f.ExternalGatewayAddr, extPort)
+			"/sbin/iptables -A FORWARD -p tcp -i %s -d %s --dport %d -j ACCEPT\n",
+			 f.ExternalGatewayDevice, f.ExternalGatewayAddr, extPort)
 		if err != nil {
 			return err
 		}
 	}
 	_, err := fmt.Fprintf(w,
-		"/sbin/iptables -t nat -A POSTROUTING -s %s -o eth0 -j SNAT --to %s\n",
-		f.InternalHostAddr, f.ExternalGatewayAddr)
+		"/sbin/iptables -t nat -A POSTROUTING -s %s -o %s -j SNAT --to %s\n",
+		f.InternalHostAddr, f.ExternalGatewayDevice, f.ExternalGatewayAddr)
 	return err
 }
 
